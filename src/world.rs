@@ -13,6 +13,20 @@ pub fn new_world(cells: Vec<Cell>) -> World {
   }
 }
 
+fn get_neighbour_positions(cell: &Cell) -> HashSet<Cell> {
+  let (x, y) = cell;
+  vec![
+    (x - 1, y + 1),
+    (x + 0, y + 1),
+    (x + 1, y + 1),
+    (x - 1, y + 0),
+    (x + 1, y + 0),
+    (x - 1, y - 1),
+    (x + 0, y - 1),
+    (x + 1, y - 1),
+  ]
+}
+
 fn with_neighbours(cell: &Cell) -> HashSet<Cell> {
   let (x, y) = cell;
   HashSet::from(vec![
@@ -37,17 +51,9 @@ fn get_candidates(cells: &HashSet<Cell>) -> HashSet<Cell> {
 }
 
 fn get_num_neighbours(world_cells: &HashSet<Cell>, cell: &Cell) -> usize {
-  let (x, y) = cell;
-  let neighbour_positions = vec![
-    (x - 1, y + 1),
-    (x + 0, y + 1),
-    (x + 1, y + 1),
-    (x - 1, y + 0),
-    (x + 1, y + 0),
-    (x - 1, y - 1),
-    (x + 0, y - 1),
-    (x + 1, y - 1),
-  ];
+  let neighbour_positions = with_neighbours(cell);
+  println!("{:?}", cell);
+  println!("{:?}", neighbour_positions);
   neighbour_positions
     .into_iter()
     .filter(|cell| world_cells.contains(cell))
@@ -57,11 +63,13 @@ fn get_num_neighbours(world_cells: &HashSet<Cell>, cell: &Cell) -> usize {
 pub fn next_tick(world: World) -> World {
   let World { cells } = world;
   let candidates = get_candidates(&cells);
-  let survivors: HashSet<Cell> = candidates
+  // println!("{:?}", candidates);
+  let survivors: Vec<_> = candidates
     .into_iter()
-    .filter(|cell| get_num_neighbours(&cells, &cell) == 3)
+    .map(|cell| (cell, get_num_neighbours(&cells, &cell)))
     .collect();
-  World { cells: survivors }
+  println!("{:?}", survivors);
+  World { cells: cells }
 }
 
 #[cfg(test)]
