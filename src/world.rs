@@ -32,19 +32,17 @@ fn get_with_neighbours(cell: Cell) -> HashSet<Cell> {
 }
 
 fn get_candidates(cells: &HashSet<Cell>) -> HashSet<Cell> {
-  let with_repetition: Vec<Cell> = cells
+  cells
     .into_iter()
-    .flat_map(|cell| get_with_neighbours(*cell))
-    .collect();
-  HashSet::from(with_repetition)
+    .flat_map(|&cell| get_with_neighbours(cell))
+    .collect()
 }
 
 fn get_num_neighbours(world_cells: &HashSet<Cell>, cell: Cell) -> usize {
-  let neighbour_positions = get_neighbour_positions(cell);
-  neighbour_positions
-    .into_iter()
-    .filter(|cell| world_cells.contains(cell))
-    .count()
+  world_cells
+    .clone()
+    .intersection(get_neighbour_positions(cell))
+    .len()
 }
 
 fn get_newborns(world_cells: &HashSet<Cell>) -> HashSet<Cell> {
@@ -58,24 +56,20 @@ fn get_newborns(world_cells: &HashSet<Cell>) -> HashSet<Cell> {
 
 fn get_deceased(world_cells: &HashSet<Cell>) -> HashSet<Cell> {
   world_cells
-    .iter()
+    .into_iter()
     .filter(|&&cell| {
       let num_neighbours = get_num_neighbours(world_cells, cell);
       num_neighbours < 2 || 3 < num_neighbours
     })
-    .map(|cell| *cell)
+    .map(|&cell| cell)
     .collect()
 }
 
 pub fn next_tick(world: World) -> World {
   let World { cells } = world;
-  let candidates = get_candidates(&cells);
-  println!("{:?}", candidates);
-
   let deceased = get_deceased(&cells);
   let newborns = get_newborns(&cells);
   let next_cells = cells.relative_complement(deceased).union(newborns);
-  println!("{:?}", next_cells);
   World { cells: next_cells }
 }
 
@@ -166,8 +160,6 @@ mod tests {
     let world = new_world(initial_cells);
     let World { cells: next_cells } = next_tick(world);
     let expected_next_cells: HashSet<Cell> = HashSet::from(vec![(0, 1), (0, 0), (0, -1)]);
-
-    println!("{:?}", next_cells);
 
     assert_eq!(next_cells, expected_next_cells);
   }
