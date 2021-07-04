@@ -48,12 +48,22 @@ fn get_num_neighbours(world_cells: &HashSet<Cell>, cell: Cell) -> usize {
 }
 
 fn get_newborns(world_cells: &HashSet<Cell>) -> HashSet<Cell> {
-  println!("{:?}", world_cells);
-  let newborn_candidates: HashSet<_> = get_candidates(world_cells).difference(world_cells.clone());
-  println!("{:?}", newborn_candidates);
+  let newborn_candidates: HashSet<_> =
+    get_candidates(world_cells).relative_complement(world_cells.clone());
   newborn_candidates
     .into_iter()
     .filter(|newborn_candidate| get_num_neighbours(world_cells, *newborn_candidate) == 3)
+    .collect()
+}
+
+fn get_deceased(world_cells: &HashSet<Cell>) -> HashSet<Cell> {
+  world_cells
+    .iter()
+    .filter(|&&cell| {
+      let num_neighbours = get_num_neighbours(world_cells, cell);
+      num_neighbours < 2 || 3 < num_neighbours
+    })
+    .map(|cell| *cell)
     .collect()
 }
 
@@ -62,19 +72,11 @@ pub fn next_tick(world: World) -> World {
   let candidates = get_candidates(&cells);
   println!("{:?}", candidates);
 
-  let survivors: Vec<_> = candidates
-    .into_iter()
-    .map(|cell| (cell, get_num_neighbours(&cells, cell)))
-    .collect();
-  println!("{:?}", survivors);
-  World { cells: cells }
-}
-
-fn print_world(world: World) -> String {
-  String::from(
-    "  # 
-     #   ",
-  )
+  let deceased = get_deceased(&cells);
+  let newborns = get_newborns(&cells);
+  let next_cells = cells.relative_complement(deceased).union(newborns);
+  println!("{:?}", next_cells);
+  World { cells: next_cells }
 }
 
 #[cfg(test)]
@@ -135,7 +137,7 @@ mod tests {
   }
 
   #[test]
-  fn test_get_num_neighbours_returns_correct_value_for_3_neighbour() {
+  fn test_get_num_neighbours_returns_correct_value_for_3_neighbours() {
     let cells = HashSet::from(vec![(3, 0), (3, -1), (2, 0), (2, 1), (12, 45)]);
     let num_neighbours = get_num_neighbours(&cells, (3, 0));
 
@@ -143,38 +145,30 @@ mod tests {
   }
 
   #[test]
-  fn test_print_world() {
-    let map = print_world(new_world(vec![(0, 0), (2, 0), (-1, -1)]));
+  fn get_newborns_works_for_oscillator() {
+    let initial_cells = HashSet::from(vec![(-1, 0), (0, 0), (1, 0)]);
+    let newborns = get_newborns(&initial_cells);
 
-    println!("{}", map);
-    println!("---");
-    println!("# #");
-    assert_eq!(
-      map,
-      String::from(
-        " # #
-         #   "
-      )
-    );
+    assert_eq!(newborns, HashSet::from(vec![(0, 1), (0, -1)]));
   }
 
-  // #[test]
-  // fn get_newborns_works_for_oscillator() {
-  //   let initial_cells = HashSet::from(vec![(-1, 0), (0, 0), (0, 1)]);
-  //   let newborns = get_newborns(&initial_cells);
+  #[test]
+  fn get_newborns_works_for_block() {
+    let initial_cells = HashSet::from(vec![(0, 0), (0, 1), (1, 0)]);
+    let newborns = get_newborns(&initial_cells);
 
-  //   assert_eq!(newborns, HashSet::from(vec![(0, 1), (0, -1)]));
-  // }
+    assert_eq!(newborns, HashSet::from(vec![(1, 1)]));
+  }
 
-  // #[test]
-  // fn next_tick_returns_correct_new_word_for_oscillator() {
-  //   let initial_cells = vec![(-1, 0), (0, 0), (0, 1)];
-  //   let world = new_world(initial_cells);
-  //   let World { cells: next_cells } = next_tick(world);
-  //   let expected_next_cells: HashSet<Cell> = HashSet::from(vec![(0, 1), (0, 0), (0, -1)]);
+  #[test]
+  fn next_tick_returns_correct_new_word_for_oscillator() {
+    let initial_cells = vec![(-1, 0), (0, 0), (1, 0)];
+    let world = new_world(initial_cells);
+    let World { cells: next_cells } = next_tick(world);
+    let expected_next_cells: HashSet<Cell> = HashSet::from(vec![(0, 1), (0, 0), (0, -1)]);
 
-  //   println!("{:?}", next_cells);
+    println!("{:?}", next_cells);
 
-  //   assert_eq!(next_cells, expected_next_cells);
-  // }
+    assert_eq!(next_cells, expected_next_cells);
+  }
 }
