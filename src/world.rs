@@ -9,12 +9,16 @@ pub struct World {
 }
 
 impl World {
-  fn next_step(&self) -> World {
+  fn next_step(self) -> World {
     let World { cells } = self;
     let deceased = get_deceased(&cells);
     let newborns = get_newborns(&cells);
     let next_cells = cells.clone().relative_complement(deceased).union(newborns);
     World { cells: next_cells }
+  }
+
+  fn forward(self, n: usize) -> World {
+    (0..n).into_iter().fold(self, |world, _| world.next_step())
   }
 }
 
@@ -133,7 +137,7 @@ mod tests {
   }
 
   #[test]
-  fn get_newborns_works_for_oscillator() {
+  fn test_get_newborns_works_for_oscillator() {
     let initial_cells = HashSet::from_iter([(-1, 0), (0, 0), (1, 0)]);
     let newborns = get_newborns(&initial_cells);
 
@@ -141,7 +145,7 @@ mod tests {
   }
 
   #[test]
-  fn get_newborns_works_for_block() {
+  fn test_get_newborns_works_for_block() {
     let initial_cells = HashSet::from_iter([(0, 0), (0, 1), (1, 0)]);
     let newborns = get_newborns(&initial_cells);
 
@@ -149,13 +153,38 @@ mod tests {
   }
 
   #[test]
-  fn next_tick_returns_correct_new_word_for_oscillator() {
+  fn test_next_step_returns_correct_new_word_for_oscillator() {
     let initial_cells = [(-1, 0), (0, 0), (1, 0)];
     let world = World {
       cells: HashSet::from_iter(initial_cells),
     };
-    let World { cells: next_cells } = world.next_step();
+    let World { cells: next_cells } = world.forward(1);
     let expected_next_cells: HashSet<Cell> = HashSet::from_iter([(0, 1), (0, 0), (0, -1)]);
+
+    assert_eq!(next_cells, expected_next_cells);
+  }
+
+  #[test]
+  fn test_avance_12_steps_returns_correct_word_for_oscillator() {
+    let initial_cells = [(-1, 0), (0, 0), (1, 0)];
+    let world = World {
+      cells: HashSet::from_iter(initial_cells),
+    };
+    let World { cells: next_cells } = world.forward(12);
+    let expected_next_cells: HashSet<Cell> = HashSet::from_iter([(-1, 0), (0, 0), (1, 0)]);
+
+    assert_eq!(next_cells, expected_next_cells);
+  }
+
+  #[test]
+  fn test_avance_3_steps_returns_correct_word_for_glider() {
+    let initial_cells = [(0, 0), (1, 0), (2, 0), (2, 1), (1, 2)];
+    let world = World {
+      cells: HashSet::from_iter(initial_cells),
+    };
+    let World { cells: next_cells } = world.forward(3);
+    let expected_next_cells: HashSet<Cell> =
+      HashSet::from_iter([(2, 0), (3, 0), (1, 1), (1, -1), (2, -1)]);
 
     assert_eq!(next_cells, expected_next_cells);
   }
