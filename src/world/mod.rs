@@ -1,30 +1,5 @@
 use im::{hashset, HashSet};
 
-type Cell = (i64, i64);
-
-#[derive(Debug)]
-pub struct World {
-  cells: HashSet<Cell>,
-}
-
-impl World {
-  fn next_step(self) -> World {
-    let World { cells } = self;
-    let deceased = get_deceased(&cells);
-    let newborns = get_newborns(&cells);
-    let next_cells = cells.clone().relative_complement(deceased).union(newborns);
-    World { cells: next_cells }
-  }
-
-  fn forward(self, n: usize) -> World {
-    (0..n).into_iter().fold(self, |world, _| world.next_step())
-  }
-}
-
-fn get_neighbour_positions(cell: Cell) -> HashSet<Cell> {
-  get_with_neighbours(cell).relative_complement(hashset![cell])
-}
-
 fn get_with_neighbours(cell: Cell) -> HashSet<Cell> {
   let translations_lengths = [-1, 0, 1];
   translations_lengths
@@ -68,6 +43,31 @@ fn get_deceased(world_cells: &HashSet<Cell>) -> HashSet<Cell> {
     })
     .map(|&cell| cell)
     .collect()
+}
+
+type Cell = (i64, i64);
+
+#[derive(Debug)]
+pub struct World {
+  pub cells: HashSet<Cell>,
+}
+
+impl World {
+  fn next_step(self) -> World {
+    let World { cells } = self;
+    let deceased = get_deceased(&cells);
+    let newborns = get_newborns(&cells);
+    let next_cells = cells.clone().relative_complement(deceased).union(newborns);
+    World { cells: next_cells }
+  }
+
+  pub fn forward(self, n: usize) -> World {
+    (0..n).into_iter().fold(self, |world, _| world.next_step())
+  }
+}
+
+fn get_neighbour_positions(cell: Cell) -> HashSet<Cell> {
+  get_with_neighbours(cell).relative_complement(hashset![cell])
 }
 
 #[cfg(test)]
