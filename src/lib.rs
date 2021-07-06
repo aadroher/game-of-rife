@@ -1,5 +1,5 @@
 pub mod world;
-use im::{hashset, HashSet};
+use im::HashSet;
 
 use wasm_bindgen::prelude::*;
 
