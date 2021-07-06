@@ -1,4 +1,4 @@
-use game_of_rife::world::World;
+use game_of_rife::World;
 use im::hashset;
 
 fn main() {
@@ -10,6 +10,6 @@ fn main() {
   };
   println!("{:?}", world0);
 
-  let world1 = world0.forward(100000);
+  let world1 = world0.forward(1000);
   println!("{:?}", world1);
 }
