@@ -4,7 +4,9 @@ version = "0.0.2"
 authors = ["Armand Adroher <aadroher@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
+wasm-bindgen = "0.2.74"
 im = "15.0.0"
